@@ -42,7 +42,7 @@ begin
   end process;
 
   -- Enter your code here
-  -- triggering on this intermediate signal makes the waveformviewer shot this signal
+  -- triggering on this intermediate signal makes the waveformviewer show this signal
   output_transaction <=  output'transaction; 
 
   event_count_p: process(output) is
