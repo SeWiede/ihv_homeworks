@@ -15,9 +15,9 @@ architecture behav of ex3 is
   constant propagation_delay: time := 23 ns;
   constant high_threshold: real := 0.632;
   constant low_threshold: real := 0.368;
-  constant Vcc: real := 3.3; -- Example Vcc
   
-  constant tau: time := 2.5 us; -- R * C
+  constant tau10: time := 2.5 us; -- 50 Ohm * 50nF C
+  constant tau01: time := 52.5 us; -- 1050 Ohm * 50nF C
 
 
   constant EO_delay: time := 32 ns; -- electrical to optical delay
@@ -42,7 +42,8 @@ begin
 
   -- electrical:
   rx_electrical_int <= transport tx_electrical after propagation_delay; -- pure delay to RX; only then interial
-  rx_electrical <= rx_electrical_int after tau; -- intertial delay: filter out pulses < tau
+  rx_electrical <= rx_electrical_int after tau01 when rx_electrical_int
+                  else rx_electrical_int after tau10; -- asymetric intertial delay: filter out pulses < tau
 
   process(rx_electrical)
   begin
