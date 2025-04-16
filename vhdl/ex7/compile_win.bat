@@ -1,0 +1,1 @@
+i686-w64-mingw32-gcc -shared -m32 -I C:\modelsim\intel_20.3\modelsim_ase\include -Wall -o shared.so shared.c

@@ -1,0 +1,34 @@
+[submodule "osvvm"]
+	path = osvvm
+	url = ../OSVVM.git
+[submodule "Common"]
+	path = Common
+	url = ../OSVVM-Common.git
+[submodule "Scripts"]
+	path = Scripts
+	url = ../OSVVM-Scripts.git
+[submodule "AXI4"]
+	path = AXI4
+	url = ../AXI4.git
+[submodule "UART"]
+	path = UART
+	url = ../UART.git
+[submodule "Documentation"]
+	path = Documentation
+	url = ../Documentation.git
+[submodule "DpRam"]
+	path = DpRam
+	url = ../DpRam.git
+[submodule "Ethernet"]
+	path = Ethernet
+	url = ../Ethernet.git
+[submodule "CoSim"]
+	path = CoSim
+	url = ../CoSim.git
+[submodule "VideoBus_LouisAdriaens"]
+	path = VideoBus_LouisAdriaens
+	url = ../VideoBus_LouisAdriaens.git
+[submodule "SPI_GuyEschemann"]
+	path = SPI_GuyEschemann
+	url = ../SPI_GuyEschemann.git
+	branch = main
