@@ -4,4 +4,4 @@ analyze avmm_pkg.vhd
 analyze avmm_vu.vhd
 analyze ex5.vhd
 
-simulate ex5
+simulate ex5 -coverage
