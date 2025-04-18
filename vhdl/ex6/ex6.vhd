@@ -6,7 +6,6 @@ entity ex6 is
 end entity;
 
 architecture behav of ex6 is
-
   subtype WordT is std_logic_vector(7 downto 0);
   type RegistersT is array(0 to 3) of WordT;
   constant RESET_VAL_C: RegistersT  := ( "01000000", "00001010", "00001010", "00000000" );
@@ -55,6 +54,7 @@ architecture behav of ex6 is
     pins <= ((pins.address'range => 'L'), (pins.writedata'range => 'L'), (pins.readdata'range => '0'), 'L', 'L', 'L');
     loop 
       wait until clk'event and clk = '1';
+
       addr := to_integer(unsigned(pins.address));
 
       pins.readdatavalid <= '0';
@@ -83,6 +83,11 @@ architecture behav of ex6 is
     end loop;
   end procedure;
 
+
+  shared variable readCov : CovPType;
+  shared variable writeCov : CovPType;
+  shared variable readAfterWriteCov : CovPType;
+  shared variable b2breadCov : CovPType;
 begin
 
   CreateClock(clk_i, 10 ns);
@@ -106,14 +111,109 @@ begin
     -- Perform the checks (DUT vs reference model). As it is a register interface, it is sufficient to
     -- check the results of read-accesses to the registers.
     -- Enter your code here
+    
+    wait until ref_pins_io.read = '1';
+    wait until ref_pins_io.readdatavalid = '1';
+
+    AffirmIfEqual(pins_io.readdata, ref_pins_io.readdata, 
+                  "readdata on address " & to_string(pins_io.address) 
+                  & " should be " & to_string(ref_pins_io.readdata)
+                  & " was " & to_string(pins_io.readdata) );
   end process;
 
   stimuli_p: process is
     -- Enter your code here
+    variable read_data,read_data1 : std_logic_vector(7 downto 0);
+    variable address : integer;
+
+    variable RV : RandomPType;
+
+    variable testIterations : integer := 0;
+    variable write_data : std_logic_vector(7 downto 0);
   begin
     pins_io <= ((others => '0'), (others => '0'), (others => 'L'), 'L', '0', '0');
     -- Implement your main testbench code here
     -- Enter your code here
+
+    rv.InitSeed(RV'instance_name);
+    readCov.InitSeed(RV'instance_name);
+
+    readCov.SetName("Simple Read Coverage");
+    readCov.AddBins("address", GenBin(0, 2**pins_io.address'length-1));
+
+    writeCov.SetName("Simple Write Coverage");
+    writeCov.AddBins("address", GenBin(0, 2**pins_io.address'length-1));
+
+    readAfterWriteCov.SetName("ReadAfterWrite Coverage");
+    readAfterWriteCov.AddBins("address", GenBin(0, 2**pins_io.address'length-1));
+
+    b2breadCov.SetName("Back to Back Read Coverage");
+    b2breadCov.AddBins("b2bReads", GenBin(0, 2**pins_io.address'length-1));
+
+    -- reset first
+    Write(pins_io, 0, x"01");
+    WaitForClock(clk_i, 2);
+
+    while testIterations < 100 
+      --or not readCov.IsCovered 
+      --or not writeCov.IsCovered
+      --or not readAfterWriteCov.IsCovered
+     -- or not b2breadCov.IsCovered
+    loop
+      -- random operation
+      --case RV.DistInt((20, 20, 20 , 60, 5)) is
+      case RV.DistInt((100,0, 0 , 0, 50)) is
+        when 0 => -- just read
+          log("just reading");
+          -- IF does not always clear
+          address  := readCov.RandCovPoint;
+          Read(pins_io, 3, read_data);
+          readCov.ICover(address);
+        when 1 => -- just write random data
+          log("just writing");
+          address  := writeCov.RandCovPoint;
+          write_data := RV.RandSlv(pins_io.writedata'length);
+          -- keep old data (assume regs has correct data )
+          write_data := (regs(address) and not WRITE_MASK_C(address)) or (write_data and WRITE_MASK_C(address));
+          Write(pins_io, address, write_data); -- contrain to spec
+          writeCov.ICover(address);
+        when 2 => -- write immediately read
+          log("just randomly writing then reading");
+          address  := readAfterWriteCov.RandCovPoint;
+          write_data := RV.RandSlv(pins_io.writedata'length);
+          -- keep old data (assume regs has correct data )
+          write_data := (regs(address) and not WRITE_MASK_C(address)) or (write_data and WRITE_MASK_C(address));
+          Write(pins_io, address, write_data); -- contrain to spec
+          Read(pins_io, address, read_data);
+          readAfterWriteCov.ICover(address);
+        when 3 =>
+          log("b2b reading");
+          address  := b2breadCov.RandCovPoint;
+          Read(pins_io, address, read_data);
+          Read(pins_io, address, read_data1);
+          if address = 3 then
+            -- CNT does not always increment
+            AlertIfEqual(read_data, read_data1, "Must be off-by-one");
+          end if;
+          Log("data1 = "  & to_string(read_data) & ", data2 = " & to_string(read_data1));
+          b2breadCov.ICover(address);
+        when 4 =>
+          log("occasional reset");
+          Write(pins_io, 0, x"01");
+        when others =>
+          assert false severity failure;
+      end case;
+
+      WaitForClock(clk_i, 2);
+      testIterations := testIterations + 1;
+    end loop;
+
+    log("Read coverage: " & to_String(readCov.GetCov));
+    log("Write coverage: " & to_String(writeCov.GetCov));
+    log("ReadAfterWrite coverage: " & to_String(readAfterWriteCov.GetCov));
+
+
+    ReportAlerts;
     Log("**********************************");
     std.env.stop;
     wait ; 
