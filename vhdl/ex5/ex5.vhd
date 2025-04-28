@@ -123,12 +123,9 @@ begin
     waitForClock(clk_i);
     waitForClock(clk_i);
 
-
   --  procedure AvmmWrite(signal trans: inout AddressBusRecType; addr, data, byte_enable: std_logic_vector) is
   --  procedure AvmmRead(signal trans: inout AddressBusRecType; addr, byte_enable: std_logic_vector; variable read_data: out std_logic_vector) is
-  --procedure AvmmReadModifyWrite(signal trans: inout AddressBusRecType; addr, data, write_mask: std_logic_vector) is
-
-
+  --  procedure AvmmReadModifyWrite(signal trans: inout AddressBusRecType; addr, data, write_mask: std_logic_vector) is
 
     ReportAlerts ;
     Log("***************DONE***************");
@@ -144,8 +141,6 @@ begin
     wait until pins_io.read = '1';
     pins_io.readdata <= x"aa00";  
   end process;
-
-
 
   check_reads_p: process
     variable masked : std_logic_vector(pins_io.writedata'range);
@@ -165,7 +160,4 @@ begin
     waitForClock(clk_i);
   end process;
 
-
-
-  
 end architecture;

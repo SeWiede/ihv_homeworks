@@ -1,0 +1,14 @@
+Coverage Report Summary Data by file
+
+=================================================================================
+=== File: ex4.vhd
+=================================================================================
+    Enabled Coverage              Bins      Hits    Misses  Coverage
+    ----------------              ----      ----    ------  --------
+    Branches                         8         8         0   100.00%
+    Conditions                       4         4         0   100.00%
+    Statements                      74        73         1    98.64%
+
+
+Total Coverage By File (code coverage only, filtered view): 99.54%
+

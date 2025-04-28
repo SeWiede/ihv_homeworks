@@ -4,6 +4,7 @@
 #include <string.h>
 #include <time.h>
 #include <math.h>
+#include <sys/time.h>
 
 // Implement the C functions here
 //-- Enter your code here
@@ -20,7 +21,28 @@ void GetTimeC(int* hour, int* minute, int* second) {
         // Set default values in case of error
         *hour = *minute = *second = -1;
     }
+    printf("GetTimeC called: %02d:%02d:%02d\n", *hour, *minute, *second);
 }
+
+/* void GetBetterTimeC(int* hour, int* minute, int* second, int* millisecond, int* microsecond) {
+    struct timeval tv;
+    struct tm* local;
+
+    gettimeofday(&tv, NULL);
+    local = localtime(&tv.tv_sec);
+
+    if (local != NULL) {
+        *hour = local->tm_hour;
+        *minute = local->tm_min;
+        *second = local->tm_sec;
+        *millisecond = tv.tv_usec / 1000;
+        *microsecond = tv.tv_usec % 1000;
+    } else {
+        *hour = *minute = *second = *millisecond = *microsecond = -1;
+    }
+    printf("GetBetterTimeC called: %02d:%02d:%02d\n", *hour, *minute, *second);
+
+} */
 
 void OneStepC(
     double* zr,

@@ -61,9 +61,8 @@ begin
           trans_io.DataFromModel <= ToTransaction(pins_io.readdata);
           pins_io <= IDLE_PINS;
           wait for 0 ns;
-        when others =>
+        when others => -- not part of coverage
           Alert("Unimplemented Transaction", FAILURE);
-          
       end case;
     end loop;
   end process;

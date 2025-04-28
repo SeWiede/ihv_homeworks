@@ -88,6 +88,7 @@ architecture behav of ex6 is
   shared variable writeCov : CovPType;
   shared variable readAfterWriteCov : CovPType;
   shared variable b2breadCov : CovPType;
+  shared variable writeDifferentReadCov : CovPType;
 begin
 
   CreateClock(clk_i, 10 ns);
@@ -114,6 +115,7 @@ begin
     
     wait until ref_pins_io.read = '1';
     wait until ref_pins_io.readdatavalid = '1';
+    wait for 0 ns;
 
     AffirmIfEqual(pins_io.readdata, ref_pins_io.readdata, 
                   "readdata on address " & to_string(pins_io.address) 
@@ -130,13 +132,13 @@ begin
 
     variable testIterations : integer := 0;
     variable write_data : std_logic_vector(7 downto 0);
+    variable rwaddrs : integer_vector(0 to 1);
   begin
     pins_io <= ((others => '0'), (others => '0'), (others => 'L'), 'L', '0', '0');
     -- Implement your main testbench code here
     -- Enter your code here
 
     rv.InitSeed(RV'instance_name);
-    readCov.InitSeed(RV'instance_name);
 
     readCov.SetName("Simple Read Coverage");
     readCov.AddBins("address", GenBin(0, 2**pins_io.address'length-1));
@@ -150,19 +152,23 @@ begin
     b2breadCov.SetName("Back to Back Read Coverage");
     b2breadCov.AddBins("b2bReads", GenBin(0, 2**pins_io.address'length-1));
 
+    writeDifferentReadCov.SetName("Write but read seomwhere else");
+    writeDifferentReadCov.AddCross("writeDifferentRead", GenBin(0, 2**pins_io.address'length-1), GenBin(0, 2**pins_io.address'length-1));
+
     -- reset first
     Write(pins_io, 0, x"01");
     WaitForClock(clk_i, 2);
 
     while testIterations < 100 
-      --or not readCov.IsCovered 
-      --or not writeCov.IsCovered
-      --or not readAfterWriteCov.IsCovered
-     -- or not b2breadCov.IsCovered
+      or not readCov.IsCovered 
+      or not writeCov.IsCovered
+      or not readAfterWriteCov.IsCovered
+      or not b2breadCov.IsCovered
+      or not writeDifferentReadCov.IsCovered
     loop
       -- random operation
-      --case RV.DistInt((20, 20, 20 , 60, 5)) is
-      case RV.DistInt((100,0, 0 , 0, 50)) is
+      case RV.DistInt((15, 15, 15 ,15, 20, 10)) is
+      --case RV.DistInt((100,0, 0 , 0, 50)) is
         when 0 => -- just read
           log("just reading");
           -- IF does not always clear
@@ -198,6 +204,13 @@ begin
           Log("data1 = "  & to_string(read_data) & ", data2 = " & to_string(read_data1));
           b2breadCov.ICover(address);
         when 4 =>
+          log("write but read somewhere else");
+          rwaddrs := writeDifferentReadCov.RandCovPoint;
+          write_data := RV.RandSlv(pins_io.writedata'length);
+          Write(pins_io, rwaddrs(0), write_data);
+          Read(pins_io, rwaddrs(1), read_data1);
+          writeDifferentReadCov.ICover(rwaddrs);
+        when 5 =>
           log("occasional reset");
           Write(pins_io, 0, x"01");
         when others =>
@@ -220,3 +233,13 @@ begin
   end process;
 
 end architecture;
+
+/*
+  Can you find such “features/bugs” using constrained random testing? Which ones?
+
+ - Some readonly fields are (sometimes) writable
+ - Counters (regs(3)) are off by one after reset
+ - Counters (regs(3)) does not always count (can get stuck)
+ - IF does not always clear after
+ - CHK is not always NAME xor ID
+*/

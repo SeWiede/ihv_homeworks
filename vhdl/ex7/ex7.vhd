@@ -21,6 +21,18 @@ architecture behav of ex7 is
    second := -1; 
   end procedure;
 
+  /*procedure GetBetterTimeC(hour, minute, second, millisecond, microsecond: out integer);
+  attribute FOREIGN of GetBetterTimeC : procedure is "GetBetterTimeC ./shared.so";
+  procedure GetBetterTimeC(hour, minute, second, millisecond, microsecond: out integer) is
+  begin
+   Log("Error: foreign subprogram GetBetterTimeC was not executed correclty");
+   hour := -1; 
+   minute := -1; 
+   second := -1; 
+   millisecond := -1; 
+   microsecond := -1; 
+  end procedure;*/
+
   procedure OneStepC(zr, zi, cr, ci: real; outr, outi: out real);
   attribute FOREIGN of OneStepC : procedure is "OneStepC ./shared.so";
   procedure OneStepC(zr, zi, cr, ci: real; outr, outi: out real) is
@@ -45,30 +57,6 @@ architecture behav of ex7 is
    Log("Error: foreign subprogram IterateC was not executed correclty");
    return -1;
   end function;*/
-
-  -- Func wrapper to use just like Iterate
-  function IterateC(x, y : real) return integer is
-    variable its : integer := 0;
-  begin
-    IterateC(x,y,its);
-    return its;
-  end function;
-
-  -- Func wrappers to use just like OneStep
-  pure function OneStepC(z, c : Complex) return Complex is 
-    variable o : Complex := (0.0,0.0);
-  begin
-    OneStepC(z.re, z.im, c.re, c.im, o.re, o.im);
-    return o;
-  end function;
-
-  -- Func wrapper such that logging is a one liner
-  pure function GetTimeC return string is
-    variable hour, minute, second: integer := 0;
-  begin
-    GetTimeC(hour, minute, second);
-    return "Current Time: " & to_string(hour) & ":" & to_string(minute) & ":" & to_string(second);
-  end function;
 
   pure function ToAscii(iter: integer) return character is
   begin
@@ -103,7 +91,26 @@ architecture behav of ex7 is
     for i in 1 to 200 loop
       -- Implement the VHDL function
       -- Enter your code here
-      z := OneStepC(z, (x,y));
+      z := OneStep(z, (x,y));
+
+      if(z.re * z.re + z.im * z.im > 4.0) then
+        return i;
+      end if;
+
+    end loop;
+    return 200;
+  end function;
+
+  pure function IterateVHDL(x, y: real) return integer is
+    -- Implement the VHDL function
+    -- Enter your code here
+    variable z : Complex := (0.0,0.0);
+  begin
+    for i in 1 to 200 loop
+      -- Implement the VHDL function
+      -- Enter your code here
+      OneStepC(z.re, z.im, x, y, z.re, z.im);
+      --z := OneStepC(z, (x,y));
 
       if(z.re * z.re + z.im * z.im > 4.0) then
         return i;
@@ -114,7 +121,7 @@ architecture behav of ex7 is
   end function;
 
   procedure Image is
-    constant delta: real := 0.01;
+    constant delta: real := 0.001; -- higher res -> way too quick otherwise
     variable text: string(1 to integer(3.0 / delta) + 1) := (others => ' ');
     variable x, y: real;
     variable mandel, idx: integer;
@@ -125,7 +132,51 @@ architecture behav of ex7 is
       idx := 1;
       text := (others => ' ');
       while x < 1.0 loop
-        mandel := IterateC(x, y);
+        mandel := Iterate(x, y);
+        text(idx) := ToAscii(mandel);
+        x := x + delta;
+        idx := idx + 1;
+      end loop;
+      Log(text);
+      y := y + delta;
+    end loop;
+  end procedure;
+
+  procedure ImageVHDLC is
+    constant delta: real := 0.001; -- higher res -> way too quick otherwise
+    variable text: string(1 to integer(3.0 / delta) + 1) := (others => ' ');
+    variable x, y: real;
+    variable mandel, idx: integer;
+  begin
+    y := -1.0;
+    while y < 1.0 loop
+      x := -2.0;
+      idx := 1;
+      text := (others => ' ');
+      while x < 1.0 loop
+        mandel := IterateVHDL(x, y);
+        text(idx) := ToAscii(mandel);
+        x := x + delta;
+        idx := idx + 1;
+      end loop;
+      Log(text);
+      y := y + delta;
+    end loop;
+  end procedure;
+
+  procedure ImageC is
+    constant delta: real := 0.001; -- higher res -> way too quick otherwise
+    variable text: string(1 to integer(3.0 / delta) + 1) := (others => ' ');
+    variable x, y: real;
+    variable mandel, idx: integer;
+  begin
+    y := -1.0;
+    while y < 1.0 loop
+      x := -2.0;
+      idx := 1;
+      text := (others => ' ');
+      while x < 1.0 loop
+        IterateC(x, y, mandel);
         text(idx) := ToAscii(mandel);
         x := x + delta;
         idx := idx + 1;
@@ -138,10 +189,20 @@ architecture behav of ex7 is
 begin
 
 stimuli_p: process is
+  variable hour, minute, second: integer := 0;
+  variable startSec : integer := 0;
+  variable stopSec : integer := 0;
 begin
-  Log(GetTimeC);
+  GetTimeC(hour, minute, second);
+  startSec := hour * 3600 + minute * 60 + second;
   Image;
-  Log(GetTimeC);
+  GetTimeC(hour, minute, second);
+  stopSec := hour * 3600 + minute * 60 + second;
+  Log("Image call took " & to_string(stopSec - startSec) & " sec");
+  -- btw I cranked up the resolution to 0.001 - 0.01 was way too quick
+  -- pure VHDL time: ~ 20 sec
+  -- VHDL + stepC: ~ 4 sec
+  -- pure C: ~ 3 sec
   wait;
 end process;
 

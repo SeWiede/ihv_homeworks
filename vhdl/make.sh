@@ -10,7 +10,7 @@ function Usage() {
   exit
 }
 
-source ../settings.make
+source ./settings.make
 
 if [[ "$1" == "sim" ]] || [[ "$#" == "0" ]]; then
   echo "Starting Simulation..."
