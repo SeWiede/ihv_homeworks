@@ -1,13 +1,288 @@
-Coverage Report Summary Data by file
+Coverage Report by file with details
 
 =================================================================================
 === File: ex4.vhd
 =================================================================================
+Branch Coverage:
     Enabled Coverage              Bins      Hits    Misses  Coverage
     ----------------              ----      ----    ------  --------
     Branches                         8         8         0   100.00%
+
+================================Branch Details================================
+
+Branch Coverage for file ex4.vhd --
+
+------------------------------------IF Branch------------------------------------
+    65                                        12     Count coming in to IF
+    65              1                         10           if current /= null then
+                                               2     All False Count
+Branch totals: 2 hits of 2 branches = 100.00%
+
+------------------------------------IF Branch------------------------------------
+    87                                        16     Count coming in to IF
+    87              1                         12           if current /= null then
+    94              1                          4           else
+Branch totals: 2 hits of 2 branches = 100.00%
+
+------------------------------------IF Branch------------------------------------
+    88                                        12     Count coming in to IF
+    88              1                          4             if prev /= null then
+    90              1                          8             else
+Branch totals: 2 hits of 2 branches = 100.00%
+
+------------------------------------IF Branch------------------------------------
+    104                                       14     Count coming in to IF
+    104             1                          4           if Count = 0 then
+                                              10     All False Count
+Branch totals: 2 hits of 2 branches = 100.00%
+
+
+Condition Coverage:
+    Enabled Coverage              Bins   Covered    Misses  Coverage
+    ----------------              ----      ----    ------  --------
     Conditions                       4         4         0   100.00%
+
+================================Condition Details================================
+
+Condition Coverage for file ex4.vhd --
+
+----------------Focused Condition View-------------------
+Line       60 Item    1  ((current /= ) and (i < index))
+Condition totals: 2 of 2 input terms covered = 100.00%
+
+----------------Focused Condition View-------------------
+Line       81 Item    1  ((current /= ) and (i < index))
+Condition totals: 2 of 2 input terms covered = 100.00%
+
+
+Statement Coverage:
+    Enabled Coverage              Bins      Hits    Misses  Coverage
+    ----------------              ----      ----    ------  --------
     Statements                      74        73         1    98.64%
+
+================================Statement Details================================
+
+Statement Coverage for file ex4.vhd --
+
+    1                                                library common_lib;
+    2                                                context common_lib.common_context;
+    3                                                
+    4                                                -- Implement the generic package head here. 
+    5                                                package linked_list is
+    6                                                  -- Enter your code here
+    7                                                  generic ( 
+    8                                                    type ElementT;
+    9                                                    DEFAULT_VALUE: ElementT;
+    10                                                   function ToStringF(item: ElementT) return string
+    11                                                 );
+    12                                                 
+    13                                                 type NodeT;
+    14                                                 type NodeT_Ptr is access NodeT;
+    15                                                 type NodeT is record
+    16                                                   data: ElementT;
+    17                                                   nextItem: NodeT_Ptr;
+    18                                                 end record;
+    19                                               
+    20                                                 type SinglyLinkedList is protected
+    21                                                   impure function Count return integer;
+    22                                                   procedure AddFirst(item: ElementT);
+    23                                                   impure function GetAt(index: integer) return ElementT;
+    24                                                   procedure RemoveAt(index: integer);
+    25                                                   impure function Dump return string;
+    26                                                 end protected;
+    27                                               end package;
+    28                                               
+    29                                               -- Implement the package body here
+    30                                               package body linked_list is
+    31                                                 -- Enter your code here
+    32                                                 type SinglyLinkedList is protected body
+    33                                                   variable head : NodeT_Ptr;
+    34                                               
+    35                                                   impure function Count return integer is
+    36                                                     variable count: integer := 0;
+    37                                                     variable current: NodeT_Ptr;
+    38                                                   begin
+    39              1                         24           current := head;
+    40              1                         66           while current /= null loop
+    41              1                         42             count := count + 1;
+    42              1                         42             current := current.NextItem;
+    43              1                         42           end loop;
+    44                                               
+    45              1                         24           return count;
+    46                                                   end function;
+    47                                               
+    48                                                   procedure AddFirst(item: ElementT) is
+    49                                                     variable newNode: NodeT_Ptr;
+    50                                                   begin
+    51              1                         12           newNode := new NodeT'(item, head);
+    52              1                         12           head := newNode;
+    53                                                   end procedure;
+    54                                               
+    55                                                   impure function GetAt(index: integer) return ElementT is
+    56                                                     variable current: NodeT_Ptr;
+    57                                                     variable i: integer := 0;
+    58                                                   begin
+    59              1                         12           current := head;
+    60              1                         40           while (current /= null) and (i < index) loop
+    61              1                         28             current := current.NextItem;
+    62              1                         28             i := i + 1;
+    63              1                         28           end loop;
+    64                                               
+    65                                                     if current /= null then
+    66              1                         10             return current.Data;
+    67                                                     end if;
+    68                                               
+    69              1                          2           Alert("Index out of bounds");
+    70              1                          2           return DEFAULT_VALUE;
+    71                                                   end function;
+    72                                               
+    73                                                   procedure RemoveAt(index: integer) is
+    74                                                     variable current: NodeT_Ptr;
+    75                                                     variable prev: NodeT_Ptr;
+    76                                                     variable i: integer := 0;
+    77                                                   begin
+    78              1                         16           current := head;
+    79              1                         16           prev := null;
+    80                                               
+    81              1                         32           while (current /= null) and (i < index) loop
+    82              1                         16             prev := current;
+    83              1                         16             current := current.NextItem;
+    84              1                         16             i := i + 1;
+    85              1                         16           end loop;
+    86                                               
+    87                                                     if current /= null then
+    88                                                       if prev /= null then
+    89              1                          4               prev.NextItem := current.NextItem;
+    90                                                       else
+    91              1                          8               head := current.NextItem;
+    92                                                       end if;
+    93              1                         12             Deallocate(current);
+    94                                                     else
+    95              1                          4             Alert("Index out of bounds");
+    96                                                     end if;
+    97                                                   end procedure;
+    98                                               
+    99                                                   impure function Dump return string is
+    100                                                    variable current: NodeT_Ptr;
+    101                                                    type stringAccess is access string;
+    102                                                    variable result: stringAccess;
+    103                                                  begin
+    104                                                    if Count = 0 then
+    105             1                          4             Alert("Empty List");
+    106             1                          4             return "<Empty List>";
+    107                                                    end if;
+    108                                              
+    109             1                         10           current := head;
+    110             1                         10           result := new string'(ToStringF(current.Data));
+    111                                              
+    112             1                         10           current := current.NextItem;
+    113             1                         36           while current /= null loop
+    114             1                         26             result :=  new string'(result.all & ToStringF(current.Data) & ", ");
+    115             1                         26             current := current.NextItem;
+    116             1                         26           end loop;
+    117                                              
+    118             1                         10           return result.all;
+    119                                                  end function;
+    120                                                end protected body;
+    121                                              
+    122                                              end package body;
+    123                                              
+    124                                              library common_lib;
+    125                                              context common_lib.common_context;
+    126                                              
+    127                                              entity ex4 is
+    128                                              end entity;
+    129                                              
+    130                                              architecture behav of ex4 is
+    131                                              
+    132                                                type PrimeRecT is record
+    133                                                  Number: integer;
+    134                                                  IsPrime: boolean;
+    135                                                end record;
+    136                                              
+    137                                                -- implement the ToString function here
+    138                                                function ToString(item: PrimeRecT) return string is
+    139                                                begin
+    140                                                  -- Enter your code here
+    141             1                         24         return "Number: " & integer'image(item.Number) & ", IsPrime: " & boolean'image(item.IsPrime);
+    142                                                end function;
+    143                                              
+    144                                                -- Instantiate the linked_list package here, use PrimeRecT as generic type
+    145                                                -- Enter your code here
+    146                                              
+    147                                                package PrimeRecT_list is new work.linked_list generic map( 
+    148                                                  ElementT => PrimeRecT,
+    149                                                  DEFAULT_VALUE => (Number => -1, IsPrime => false),
+    150                                                  ToStringF => ToString
+    151                                                );
+    152                                                use PrimeRecT_list.all;
+    153                                              
+    154                                              begin
+    155                                              
+    156             1                          1       stimuli_p: process is
+    157                                                  variable list: SinglyLinkedList;
+    158                                                begin
+    159                                                  -- Implement your main testbench code here
+    160                                                  -- Enter your code here
+    161             1                          1         Log("**********************************");
+    162                                              
+    163             1                          1         report list.Dump;
+    164             1                          1         AffirmIfEqual(list.Count, 0, "Count should be 0");
+    165                                                  
+    166                                                  -- try remove empty list
+    167             1                          1         list.removeAt(1);
+    168                                                  
+    169                                                  -- Add a few items
+    170             1                          1         list.addFirst((5, false));
+    171             1                          1         AffirmIfEqual(list.Count, 1, "Count should be 1");
+    172             1                          1         list.removeAt(0);
+    173             1                          1         report list.Dump;
+    174             1                          1         AffirmIfEqual(list.Count, 0, "Count should be 0");
+    175                                              
+    176             1                          1         list.addFirst((5, true));
+    177             1                          1         list.addFirst((4, true));
+    178             1                          1         list.addFirst((3, true));
+    179             1                          1         list.addFirst((2, true));
+    180             1                          1         list.addFirst((1, false));
+    181                                                  -- 1-5 in order
+    182             1                          1         report list.Dump;
+    183                                                  
+    184             1                          1         report ToString(list.GetAt(0));
+    185             1                          1         report ToString(list.GetAt(1));
+    186             1                          1         report ToString(list.GetAt(2));
+    187             1                          1         report ToString(list.GetAt(3));
+    188             1                          1         report ToString(list.GetAt(4));
+    189                                              
+    190             1                          1         list.removeAt(0);
+    191                                                  -- 2-5 in order
+    192             1                          1         report list.Dump;
+    193                                              
+    194                                                  -- Fail
+    195             1                          1         report ToString(list.GetAt(10));
+    196                                                  
+    197                                                  -- Should Alert
+    198             1                          1         list.removeAt(4);
+    199                                                  -- 2-5 in order
+    200             1                          1         report list.Dump;
+    201                                              
+    202             1                          1         list.removeAt(3);
+    203                                                  -- 2-4 in order
+    204             1                          1         report list.Dump;
+    205             1                          1         list.removeAt(1);
+    206                                                  -- 2,4
+    207             1                          1         report list.Dump;
+    208             1                          1         AffirmIfEqual(list.Count, 2, "Count should be 2");
+    209                                                  
+    210             1                          1         list.removeAt(0);
+    211             1                          1         list.removeAt(0);
+    212             1                          1         AffirmIfEqual(list.Count, 0, "Count should be 0");
+    213                                              
+    214             1                          1         std.env.stop;
+    215             1                    ***0***         wait ; 
+    216                                                end process;
+    217                                              
+    218                                              end architecture;
+
 
 
 Total Coverage By File (code coverage only, filtered view): 99.54%
