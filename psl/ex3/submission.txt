@@ -1,1 +1,14 @@
 -- Enter your code here
+
+1.3.1)
+in b) p1 and p2 fail in cycle 12. They require busy to hold 3 cycles buts its high for 4 cycles.
+
+1.3.2)
+p1 length-matching &&
+p2 non-length matching &
+
+
+the relevant case ia from cycle 14+
+since p1 is lenght matching && the LHS is not true, therefore p1 holds (cancel is not low for the whole time)
+p2 is non-length matching & though. that means that LHS holds (cancel low somewhen). This requires the RHS to hold aswell.
+But RHS does not hold since there is no data_start assert after gnt in cycle 19!

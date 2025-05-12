@@ -1,0 +1,23 @@
+vunit psl_vunit_vu1 (ex3(beh1)) {
+  default clock is rising_edge(clk);
+  p1 : assert always {req} |=> { ack;busy;busy;busy;done};
+  p2 : assert always {req} |=> { ack;busy[*3]; done};
+  p3 : assert always {req} |=> { ack;busy[*3:5];done};
+}
+
+vunit psl_vunit_vu2 (ex3(beh2)) {
+  default clock is rising_edge(clk);
+  p1 : assert always {req} |=> { ack;busy;busy;busy;done};
+  p2 : assert always {req} |=> { ack;busy[*3]; done};
+  p3 : assert always {req} |=> { ack;busy[*3:5];done};
+}
+
+vunit psl_vunit_vu3 (ex3(beh3)) {
+  default clock is rising_edge(clk);
+  p1: assert always
+    {{ read_request; [*0:4]; gnt} && { cancel[=0]}} |=>
+      { data_start; data[*]; data_end};
+  p2: assert always
+    {{ read_request; [*0:4]; gnt} & { cancel[=0]}} |=>
+      { data_start; data[*]; data_end};
+}
