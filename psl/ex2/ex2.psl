@@ -1,3 +1,20 @@
 vunit psl_vunit_vu (ex2(beh)) {
   -- Enter your code here
+
+  -- LTL: pi high for 1 clk cycle @clk1
+  assert always (pi -> next! (not pi)) @clk1;
+
+  -- LTL: po high for 1 clk cycle @clk1
+  assert always (po -> next! (not po)) @clk2;
+
+  -- LTL: after pi no pi until prior po
+  assert always (pi -> next (not pi until po)) @clk1;
+
+  -- LTL: after pi po
+  assert always (pi -> eventually! po) @clk1;
+
+  -- LTL: after pi next 2 cycles of clk2 need low po
+  assert always  (pi -> 
+                      (next_a[0 to 2] (not po) @clk2)
+                  )@clk1;
 }
