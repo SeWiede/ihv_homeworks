@@ -1,3 +1,19 @@
 vunit psl_vunit_vu (ex1(beh)) {
   -- Enter your code here
+  default clock is rising_edge(clk);
+  -- LTL
+  assert (not a and not b and not c);
+  assert next[1] (a and not b and c);
+  assert next[2] (a and b and c);
+  assert next[3] (not a and not b and not c);
+  assert next[4] (a and not b and c);
+  assert next[5] (not a and b and c);
+
+  -- SERE
+  assert {(not a and not b and not c)}
+          |=> {(a and not b and c)}
+          |=> {(a and b and c)}
+          |=> {(not a and not b and not c)}
+          |=> {(a and not b and c)}
+          |=> {(not a and b and c)};
 }
