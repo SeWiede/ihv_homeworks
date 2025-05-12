@@ -16,4 +16,8 @@ vunit psl_vunit_vu (ex1(beh)) {
           |=> {(not a and not b and not c)}
           |=> {(a and not b and c)}
           |=> {(not a and b and c)};
+  
+  aa: assert {not a; a; a; not a; a; not a};
+  ba: assert {not b; not b; b; not b; not b; b};
+  ca: assert {not c; c; c; not c; c; c};
 }
