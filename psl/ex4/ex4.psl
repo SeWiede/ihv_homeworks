@@ -1,4 +1,24 @@
 vunit psl_vunit_vu (ex4(beh)) {
   -- Enter your code here
+  default clock is rising_edge(clk);
 
+  -- if rd_ena 0 -> 1 then valid data next cycle
+  assert always {not rd_ena; rd_ena} |=> 
+                  ( (rd_ena and not rd_done));
+
+  -- if rd_ena 0 -> 1 rd_valid is maybe 1 1-7 times non-consecutively followed by 1 rd_done
+  assert always {not rd_ena; rd_ena} |=> {{not rd_done[*1 to inf]} && {rd_valid[=1 to 7]}; rd_done[*1]};
+
+
+  -- if rd_ena 0 -> 1 then rd_ena stays asserted until rd_done is
+  assert always {not rd_ena; rd_ena} |-> 
+                      (rd_ena until rd_done);
+
+  -- Literally the hint: track burst - assign current burst count on rising_edge of rd_ena
+  -- else decrement if actively reading
+  -- lastly check if rd_done then burst = 0
+  signal burst: integer := 0;
+  burst <= rd_burst when rising_edge(rd_ena)
+      else burst - 1 when rising_edge(clk) and rd_ena = '1' and rd_valid = '1';
+  assert always rd_done -> burst = 0;
 }
