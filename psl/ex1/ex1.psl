@@ -9,7 +9,7 @@ vunit psl_vunit_vu (ex1(beh)) {
   assert next[4] (a and not b and c);
   assert next[5] (not a and b and c);
 
-  -- SERE
+  -- SERE step by step all at once
   assert {(not a and not b and not c)}
           |=> {(a and not b and c)}
           |=> {(a and b and c)}
@@ -17,6 +17,7 @@ vunit psl_vunit_vu (ex1(beh)) {
           |=> {(a and not b and c)}
           |=> {(not a and b and c)};
   
+  -- SERE row by row
   aa: assert {not a; a; a; not a; a; not a};
   ba: assert {not b; not b; b; not b; not b; b};
   ca: assert {not c; c; c; not c; c; c};

@@ -12,7 +12,7 @@ vunit psl_vunit_vu (ex4(beh)) {
 
   -- if rd_ena 0 -> 1 then rd_ena stays asserted until rd_done is
   assert always {not rd_ena; rd_ena} |-> 
-                      (rd_ena until rd_done);
+                      (rd_ena until! rd_done);
 
   -- Literally the hint: track burst - assign current burst count on rising_edge of rd_ena
   -- else decrement if actively reading
@@ -22,3 +22,7 @@ vunit psl_vunit_vu (ex4(beh)) {
       else burst - 1 when rising_edge(clk) and rd_ena = '1' and rd_valid = '1';
   assert always rd_done -> burst = 0;
 }
+
+
+-- Note: the rising_edge() hint completely threw me of because it seems to simply not work inside PSL expressions.
+-- That's why I use "{not rd_ena; rd_ena}". Alternatively, rose() can be used instead.
