@@ -23,7 +23,7 @@ class avmm_mem_test extends uvm_test;
   // --------------------------------------------------------------------------
   // TODO: Increase iteration count if needed
   // --------------------------------------------------------------------------
-  int m_test_iterations = 3;
+  int m_test_iterations = 300;
   // --------------------------------------------------------------------------
   // END TODO
   // --------------------------------------------------------------------------
@@ -66,7 +66,7 @@ task avmm_mem_test::run_phase(uvm_phase phase);
     // --------------------------------------------------------------------------
     // TODO: Increase transaction count if needed
     // --------------------------------------------------------------------------
-    random_seq.m_transaction_count = 10;
+    random_seq.m_transaction_count = 40;
     // --------------------------------------------------------------------------
     // END TODO
     // --------------------------------------------------------------------------
@@ -80,6 +80,17 @@ task avmm_mem_test::run_phase(uvm_phase phase);
     //       write access. You could use, e.g. the function $urandom_range to
     //       randomly decide if the password should be set or reset.
     // --------------------------------------------------------------------------    
+
+    // ~50% chance for passwort set
+    if ($urandom_range(0, 100) < 50) begin
+      pw_seq = avmm_pw_seq::type_id::create("pw_seq");
+      pw_seq.m_set_password = 1;
+    end else begin
+      pw_seq = avmm_pw_seq::type_id::create("pw_seq");
+      pw_seq.m_set_password = 0;
+    end
+
+    pw_seq.start(m_env.m_avmm_agent.m_sequencer);
 
     // --------------------------------------------------------------------------
     // END TODO

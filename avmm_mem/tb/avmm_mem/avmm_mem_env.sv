@@ -75,6 +75,9 @@ function void avmm_mem_env::connect_phase(uvm_phase phase);
   //       class and scoreboard
   // --------------------------------------------------------------------------
 
+  m_avmm_agent.analysis_port.connect(m_coverage.analysis_export);
+  m_avmm_agent.analysis_port.connect(m_scoreboard.item_collected_export);
+
   // --------------------------------------------------------------------------
   // END TODO
   // --------------------------------------------------------------------------

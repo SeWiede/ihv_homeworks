@@ -33,7 +33,12 @@ module avmm_mem (input  logic       clk, rst_n,
       end
     end  
     if (read) begin
-      readdata <= mem[address];
+      /* random rare bug
+      if ($urandom_range(0, 100) < 1) begin
+        readdata <= 8'h33;
+      end
+      else*/
+        readdata <= mem[address];
     end
     if (!rst_n) begin
       readdata <= 0;

@@ -39,6 +39,9 @@ task avmm_pw_seq::body();
     // TODO: Create sequence items, which are constrained to write password to
     //       the right registers. Hint: Look at the else branch for inspiration!
     // --------------------------------------------------------------------------
+    `uvm_info(get_type_name(),"Setting password for Page 2 access", UVM_MEDIUM);
+    `uvm_do_with(req, {write == 1; address == 127; writedata == page2_write_access_key[1]; })
+    `uvm_do_with(req, {write == 1; address == 126; writedata == page2_write_access_key[0]; })
 
     // --------------------------------------------------------------------------
     // END TODO

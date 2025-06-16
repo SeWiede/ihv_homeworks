@@ -24,7 +24,7 @@ class avmm_mem_coverage extends uvm_subscriber #(avmm_tr);
   
   logic [7:0] m_pw_regs[127:126] = '{default: 0};
 
-  typedef enum {READ_E, WRITE_E, WRITE_PAGE_2_LOCKED_E, WRITE_PAGE_2_UNLOCKED_E} access_type_t;
+  typedef enum {NONE, READ_E, WRITE_E, WRITE_PAGE_2_LOCKED_E, WRITE_PAGE_2_UNLOCKED_E} access_type_t;
 
   function access_type_t get_access_type(bit check_page_2_locked = 0);
     if (m_item.read == 1)
@@ -40,6 +40,23 @@ class avmm_mem_coverage extends uvm_subscriber #(avmm_tr);
     else
       `uvm_error("avmm_mem_coverage", "Illegal AVMM transaction!")        
   endfunction: get_access_type
+
+  function access_type_t get_prev_access_type(bit check_page_2_locked = 0);
+    if (m_prev_item == null)
+      return NONE; // Default to READ_E if no previous item exists
+    if (m_prev_item.read == 1)
+      return READ_E;
+    else if (m_prev_item.write == 1)
+      if (check_page_2_locked)
+        if (m_pw_regs == avmm_mem_pkg::page2_write_access_key)
+           return WRITE_PAGE_2_UNLOCKED_E;
+        else
+           return WRITE_PAGE_2_LOCKED_E;
+      else
+        return WRITE_E;
+    else
+      `uvm_error("avmm_mem_coverage", "Illegal AVMM transaction!")        
+  endfunction: get_prev_access_type
 
 
   covergroup m_cov;
@@ -61,21 +78,50 @@ class avmm_mem_coverage extends uvm_subscriber #(avmm_tr);
       bins write  = {1};
     }
 
-    cp_writedata: coverpoint m_item.writedata[7:0] iff m_item.write == 1 {
+    cp_writedata: coverpoint m_item.writedata[7:0] iff (m_item.write == 1) {
       bins zero_data = {0};
       bins max_data  = {8'hFF};
       bins special_data_patterns[] = {8'hAA, 8'h55};
     }
 
-    cp_readdata: coverpoint m_item.readdata iff m_item.read == 1 {
+    cp_readdata: coverpoint m_item.readdata iff (m_item.read == 1) {
       bins zero_data = {0};
       bins max_data  = {8'hFF};
-      bins special_data_patterns[] = {8'hAA, 8'h55};    
+      bins special_data_patterns[] = {8'hAA, 8'h55};
     }
 
     // ------------------------------------------------------------------------
     // TODO: Write additional coverage 
     // ------------------------------------------------------------------------
+
+    // Cross coverages
+    cp_read_all : cross cp_address, cp_readdata;
+    cp_write_all : cross cp_address, cp_writedata;
+
+    // Transitional coverages
+    cp_read_after_write : coverpoint {m_item.read, m_item.write} {
+      bins read_after_write[] = (2'b01 => 2'b10);
+    }
+    cp_write_after_read : coverpoint {m_item.read, m_item.write} {
+      bins write_after_read[] = (2'b10 => 2'b01);
+    }
+    cp_trans_rr : coverpoint m_item.read {
+      bins read_after_read = (1 => 1);
+    }
+    cp_trans_ww : coverpoint m_item.write {
+      bins write_after_write = (1 => 1);
+    }
+
+    // Page 2 locked Coverages
+    cp_read_after_write_locked: cross cp_address, cp_read_after_write 
+                                      iff (get_prev_access_type(1) == WRITE_PAGE_2_LOCKED_E &&
+                                            m_prev_item != null && m_prev_item.address == m_item.address);
+
+    // Page 2 unlocked Coverages
+    cp_read_after_write_unlocked: cross cp_address, cp_read_after_write 
+                                      iff (get_prev_access_type(1) == WRITE_PAGE_2_UNLOCKED_E &&
+                                            m_prev_item != null && m_prev_item.address == m_item.address);
+    
 
     // ------------------------------------------------------------------------
     // END TODO
@@ -124,8 +170,32 @@ endfunction : build_phase
 
 
 function void avmm_mem_coverage::report_phase(uvm_phase phase);
-  if (m_config.coverage_enable)
-    `uvm_info(get_type_name(), $sformatf("Coverage score = %3.1f%%", m_cov.get_inst_coverage()), UVM_MEDIUM)
+  if (m_config.coverage_enable) begin
+    `uvm_info(get_type_name(), $sformatf("Coverage score = %3.1f%%", m_cov.get_inst_coverage()), UVM_MEDIUM);
+    `uvm_info(get_type_name(), "===== FUNCTIONAL COVERAGE REPORT =====", UVM_MEDIUM)
+
+    `uvm_info(get_type_name(), $sformatf("cp_address:                           %0.2f%%", m_cov.cp_address.get_coverage()), UVM_MEDIUM)
+    `uvm_info(get_type_name(), $sformatf("cp_read:                              %0.2f%%", m_cov.cp_read.get_coverage()), UVM_MEDIUM)
+    `uvm_info(get_type_name(), $sformatf("cp_write:                             %0.2f%%", m_cov.cp_write.get_coverage()), UVM_MEDIUM)
+    `uvm_info(get_type_name(), $sformatf("cp_writedata:                         %0.2f%%", m_cov.cp_writedata.get_coverage()), UVM_MEDIUM)
+    `uvm_info(get_type_name(), $sformatf("cp_readdata:                          %0.2f%%", m_cov.cp_readdata.get_coverage()), UVM_MEDIUM)
+
+    // Cross coverages
+    `uvm_info(get_type_name(), $sformatf("cp_read_all (address x readdata):     %0.2f%%", m_cov.cp_read_all.get_coverage()), UVM_MEDIUM)
+    `uvm_info(get_type_name(), $sformatf("cp_write_all (address x writedata):   %0.2f%%", m_cov.cp_write_all.get_coverage()), UVM_MEDIUM)
+
+    // Transition coverages
+    `uvm_info(get_type_name(), $sformatf("cp_read_after_write:                  %0.2f%%", m_cov.cp_read_after_write.get_coverage()), UVM_MEDIUM)
+    `uvm_info(get_type_name(), $sformatf("cp_write_after_read:                  %0.2f%%", m_cov.cp_write_after_read.get_coverage()), UVM_MEDIUM)
+    `uvm_info(get_type_name(), $sformatf("cp_trans_rr (read -> read):           %0.2f%%", m_cov.cp_trans_rr.get_coverage()), UVM_MEDIUM)
+    `uvm_info(get_type_name(), $sformatf("cp_trans_ww (write -> write):         %0.2f%%", m_cov.cp_trans_ww.get_coverage()), UVM_MEDIUM)
+
+    // Special cases
+    `uvm_info(get_type_name(), $sformatf("cp_read_after_write_locked:           %0.2f%%", m_cov.cp_read_after_write_locked.get_coverage()), UVM_MEDIUM)
+    `uvm_info(get_type_name(), $sformatf("cp_read_after_write_unlocked:         %0.2f%%", m_cov.cp_read_after_write_unlocked.get_coverage()), UVM_MEDIUM)
+
+    `uvm_info(get_type_name(), $sformatf("Total coverage:                       %0.2f%%", m_cov.get_inst_coverage()), UVM_MEDIUM)
+    end
   else
     `uvm_info(get_type_name(), "Coverage disabled for this agent", UVM_MEDIUM)
 endfunction : report_phase
